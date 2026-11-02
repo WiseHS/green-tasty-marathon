@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -21,9 +21,12 @@ public class GetAvailableTimeSlotsHandler : IApiRequestHandler
     private static readonly TimeSpan ReservationDuration = TimeSpan.FromMinutes(90);
     private static readonly TimeSpan GapDuration = TimeSpan.FromMinutes(15);
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
 
-    public GetAvailableTimeSlotsHandler(IDynamoDBContext dbContext)
+    public GetAvailableTimeSlotsHandler(IDynamoDBContext dbContext) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext)) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetAvailableTimeSlotsHandler(APIHandler.Repositories.IApplicationData dbContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }

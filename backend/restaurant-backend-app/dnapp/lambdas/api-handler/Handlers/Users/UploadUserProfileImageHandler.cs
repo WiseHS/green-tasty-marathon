@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.S3;
@@ -20,10 +20,13 @@ public class UploadUserProfileImageHandler : IApiRequestHandler
     private static readonly string UsersImageFolderName = "profile-img";
     private readonly string _bucketName = ResourceNames.ProfileImagesBucketName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
     private readonly S3ImageService _s3ImageService;
 
-    public UploadUserProfileImageHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService)
+    public UploadUserProfileImageHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext), s3ImageService) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public UploadUserProfileImageHandler(APIHandler.Repositories.IApplicationData dbContext, S3ImageService s3ImageService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _s3ImageService = s3ImageService ?? throw new ArgumentNullException(nameof(s3ImageService));

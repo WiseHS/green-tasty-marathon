@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -15,10 +15,13 @@ public class GetLocationByIdHandler : IApiRequestHandler
 {
     private static readonly string LocationsTableName = ResourceNames.LocationsTableName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
     private readonly ILocationService _locationService;
 
-    public GetLocationByIdHandler(IDynamoDBContext dbContext, ILocationService locationService)
+    public GetLocationByIdHandler(IDynamoDBContext dbContext, ILocationService locationService) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext), locationService) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetLocationByIdHandler(APIHandler.Repositories.IApplicationData dbContext, ILocationService locationService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _locationService = locationService ?? throw new ArgumentNullException(nameof(locationService));

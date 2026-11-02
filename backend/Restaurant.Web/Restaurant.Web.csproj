@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+    <ProjectReference Include="../restaurant-backend-app/dnapp/lambdas/api-handler/APIHandler.csproj" />
+    <PackageReference Include="Npgsql" Version="10.0.0" />
+  </ItemGroup>
+</Project>

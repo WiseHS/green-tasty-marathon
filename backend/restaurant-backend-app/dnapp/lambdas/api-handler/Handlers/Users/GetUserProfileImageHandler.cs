@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -16,10 +16,13 @@ public class GetUserProfileImageHandler : IApiRequestHandler
     private static readonly string ProfileImagesTableName = ResourceNames.ProfileImagesTableName;
     private static readonly string BucketName = ResourceNames.ProfileImagesBucketName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
     private readonly S3ImageService _s3ImageService;
 
-    public GetUserProfileImageHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService)
+    public GetUserProfileImageHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext), s3ImageService) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetUserProfileImageHandler(APIHandler.Repositories.IApplicationData dbContext, S3ImageService s3ImageService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _s3ImageService = s3ImageService ?? throw new ArgumentNullException(nameof(s3ImageService));

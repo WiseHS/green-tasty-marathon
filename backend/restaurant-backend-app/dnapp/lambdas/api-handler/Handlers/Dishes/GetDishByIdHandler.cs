@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -14,9 +14,12 @@ public class GetDishByIdHandler : IApiRequestHandler
 {
     private static readonly string DishesTableName = ResourceNames.DishesTableName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
 
-    public GetDishByIdHandler(IDynamoDBContext dbContext)
+    public GetDishByIdHandler(IDynamoDBContext dbContext) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext)) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetDishByIdHandler(APIHandler.Repositories.IApplicationData dbContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }

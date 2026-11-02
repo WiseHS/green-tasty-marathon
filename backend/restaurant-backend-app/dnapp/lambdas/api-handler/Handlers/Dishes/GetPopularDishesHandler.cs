@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -15,9 +15,12 @@ public class GetPopularDishesHandler : IApiRequestHandler
 {
     private static readonly string DishesTableName = ResourceNames.DishesTableName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
 
-    public GetPopularDishesHandler(IDynamoDBContext dbContext)
+    public GetPopularDishesHandler(IDynamoDBContext dbContext) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext)) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetPopularDishesHandler(APIHandler.Repositories.IApplicationData dbContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }

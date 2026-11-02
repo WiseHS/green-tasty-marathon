@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -19,9 +19,12 @@ public class CreateLocationHandler : IApiRequestHandler
     private static readonly string LocationsImageFolderName = "assets/img/locations";
 
     private readonly S3ImageService _s3ImageService;
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
 
-    public CreateLocationHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService)
+    public CreateLocationHandler(IDynamoDBContext dbContext, S3ImageService s3ImageService) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext), s3ImageService) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public CreateLocationHandler(APIHandler.Repositories.IApplicationData dbContext, S3ImageService s3ImageService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _s3ImageService = s3ImageService ?? throw new ArgumentNullException(nameof(s3ImageService));

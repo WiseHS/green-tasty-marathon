@@ -5,7 +5,7 @@ Standalone components, SCSS, Karma + Jasmine. Deploy target: S3 static hosting.
 
 This file is the single source of truth for frontend work. The backend has no `CLAUDE.md` yet — documenting it is a separate task.
 
-**The backend cannot be run locally.** No Docker, no LocalStack, no `dotnet run` host. Frontend work runs against an already-deployed API Gateway URL; any backend change requires a real `syndicate deploy` by whoever owns that task. When a frontend model disagrees with an API response, `backend/restaurant-backend-app/docs/ApiRoutes.md` and `dnapp/lambdas/api-handler/Routing/RouteRegistry.cs` win over the frontend interface. Region note: the backend config deploys to `us-west-1` while the frontend dev environment points at an API in `eu-west-1`.
+**Portable backend:** `backend/Restaurant.Web` runs locally at `http://127.0.0.1:5080` and uses PostgreSQL on Neon. See `docs/RENDER-NEON.md` at the repository root for setup. The original Lambda application is preserved and its handlers are reused by the portable HTTP host. When a frontend model disagrees with an API response, `backend/restaurant-backend-app/docs/ApiRoutes.md` and `dnapp/lambdas/api-handler/Routing/RouteRegistry.cs` remain the contract references.
 
 ---
 

@@ -17,10 +17,13 @@ namespace APIHandler.Handlers.Locations;
 
 public class GetLocationsHandler : IApiRequestHandler
 {
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
     private readonly ILocationService _locationService;
 
-    public GetLocationsHandler(IDynamoDBContext dbContext, ILocationService locationService)
+    public GetLocationsHandler(IDynamoDBContext dbContext, ILocationService locationService) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext), locationService) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetLocationsHandler(APIHandler.Repositories.IApplicationData dbContext, ILocationService locationService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _locationService = locationService ?? throw new ArgumentNullException(nameof(locationService));

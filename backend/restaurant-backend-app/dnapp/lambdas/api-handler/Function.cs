@@ -17,9 +17,11 @@ public partial class Function
 {
     private readonly Dictionary<string, List<RouteHandler>> _routeTable;
 
-    public Function()
+    public Function() : this(RouteRegistry.GetAllRoutes()) { }
+
+    public Function(IEnumerable<RouteHandler> routes)
     {
-        _routeTable = RouteRegistry.GetAllRoutes()
+        _routeTable = routes
             .GroupBy(r => r.Route.Method.ToUpperInvariant())
             .ToDictionary(g => g.Key, g => g.ToList());
     }

@@ -1,4 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using APIHandler.Constants;
@@ -17,9 +17,12 @@ public class GetDishesByLocationIdHandler : IApiRequestHandler
     private static readonly string LocationsTableName = ResourceNames.LocationsTableName;
     private static readonly string DishesTableName = ResourceNames.DishesTableName;
 
-    private readonly IDynamoDBContext _dbContext;
+    private readonly APIHandler.Repositories.IApplicationData _dbContext;
 
-    public GetDishesByLocationIdHandler(IDynamoDBContext dbContext)
+    public GetDishesByLocationIdHandler(IDynamoDBContext dbContext) : this(new APIHandler.Repositories.DynamoApplicationData(dbContext)) { }
+
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public GetDishesByLocationIdHandler(APIHandler.Repositories.IApplicationData dbContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }

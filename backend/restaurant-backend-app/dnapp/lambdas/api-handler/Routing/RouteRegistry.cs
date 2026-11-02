@@ -55,13 +55,15 @@ namespace APIHandler.Routing;
 
 public static class RouteRegistry
 {
-    private static readonly List<RouteHandler> CachedRoutes = BuildRoutes();
+    private static readonly System.Lazy<List<RouteHandler>> CachedRoutes = new(() => BuildRoutes());
 
-    public static List<RouteHandler> GetAllRoutes() => CachedRoutes;
+    public static List<RouteHandler> GetAllRoutes() => CachedRoutes.Value;
 
-    private static List<RouteHandler> BuildRoutes()
+    public static List<RouteHandler> BuildRoutes(System.Action<ServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
+        if (configure is null)
+        {
         var region = RegionEndpoint.GetBySystemName(ResourceNames.Region);
 
         // 1. AWS Clients
@@ -84,6 +86,7 @@ public static class RouteRegistry
         services.AddSingleton(s3Client);
         services.AddSingleton<IAmazonS3>(s3Client);
 
+        services.AddSingleton<APIHandler.Repositories.IApplicationData, APIHandler.Repositories.DynamoApplicationData>();
         // 2. Repositories
         services.AddSingleton<IUserRepository, UserRepository>();
         services.AddSingleton<IDishRepository, DishRepository>();
@@ -97,6 +100,7 @@ public static class RouteRegistry
         services.AddSingleton<IGuestSessionRepository, GuestSessionRepository>();
         services.AddSingleton<IGroupReservationRepository, GroupReservationRepository>();
         services.AddSingleton<ITableRepository, TableRepository>();
+        }
 
         // 3. Services
         services.AddSingleton<S3ImageService>();
@@ -115,6 +119,7 @@ public static class RouteRegistry
         services.AddSingleton<IGuestAuthorizationService, GuestAuthorizationService>();
         services.AddSingleton<IReportService, ReportService>();
 
+        configure?.Invoke(services);
         var provider = services.BuildServiceProvider();
 
         List<RouteHandler> GetAuthAndUserRoutes() => [

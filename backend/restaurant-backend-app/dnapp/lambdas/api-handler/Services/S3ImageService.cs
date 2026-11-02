@@ -2,8 +2,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using APIHandler.Constants;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using System;
 using System.IO;
 using System.Linq;
@@ -43,7 +41,7 @@ public class S3ImageService
         return request.Key;
     }
 
-    public string GetPublicUrl(string bucketName, string imageKey)
+    public virtual string GetPublicUrl(string bucketName, string imageKey)
     {
         return $"https://{bucketName}.s3.{ResourceNames.Region}.amazonaws.com/{imageKey}";
     }
@@ -78,7 +76,8 @@ public class S3ImageService
             base64String = base64String.Substring(commaIndex + 1);
         }
 
-        return Convert.FromBase64String(base64String);
+        try { return Convert.FromBase64String(base64String); }
+        catch (FormatException) { throw new APIHandler.Exceptions.ValidationException("Invalid base64 image."); }
     }
 
     public async Task<string> GetImageKey(string imageBase64, string bucketName, string folderName, string fileName, ILambdaLogger logger)
@@ -109,12 +108,18 @@ public class S3ImageService
         return sha.ComputeHash(a).SequenceEqual(sha.ComputeHash(b));
     }
 
-    private static string GetImageContentType(byte[] imgData)
+    public static string GetImageContentType(byte[] imgData)
     {
-        using var image = Image.Load(imgData);
-        IImageFormat? format = image.Metadata.DecodedImageFormat 
-            ?? throw new InvalidOperationException("Invalid image format.");
-
-        return format.DefaultMimeType;
+        if (imgData.Length > 2 * 1024 * 1024)
+            throw new APIHandler.Exceptions.ValidationException("Image must not exceed 2 MB.");
+        // No resizing or decoding is needed: recognize a bounded set of raster
+        // containers without allocating a decoded image or accepting SVG/HTML.
+        var bytes = imgData.AsSpan();
+        if (bytes.Length >= 33 && bytes[..8].SequenceEqual(new byte[] { 137,80,78,71,13,10,26,10 }) &&
+            bytes.Slice(12,4).SequenceEqual("IHDR"u8)) return "image/png";
+        if (bytes.Length >= 4 && bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[^2] == 0xff && bytes[^1] == 0xd9) return "image/jpeg";
+        if (bytes.Length >= 13 && (bytes[..6].SequenceEqual("GIF87a"u8) || bytes[..6].SequenceEqual("GIF89a"u8))) return "image/gif";
+        if (bytes.Length >= 16 && bytes[..4].SequenceEqual("RIFF"u8) && bytes.Slice(8,4).SequenceEqual("WEBP"u8)) return "image/webp";
+        throw new APIHandler.Exceptions.ValidationException("Unsupported image format. Use PNG, JPEG, GIF or WebP.");
     }
 }
