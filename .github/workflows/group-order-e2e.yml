@@ -32,6 +32,8 @@ jobs:
       ASPNETCORE_URLS: http://127.0.0.1:5080
       UI_URL: http://localhost:4200
       API_URL: http://127.0.0.1:5080
+      AQA_ISOLATED_DATABASE: 'true'
+      AQA_DATABASE_URL: postgresql://postgres:ephemeral-ci-only@localhost:5432/restaurant
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

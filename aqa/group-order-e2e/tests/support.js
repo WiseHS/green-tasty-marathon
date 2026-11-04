@@ -1,6 +1,7 @@
 import { randomUUID, randomInt } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { setTimeout as delay } from 'node:timers/promises';
+import { IsolatedDatabase } from './isolated-database.js';
 
 const authenticationTimes = [];
 async function reserveAuthentication() {
@@ -22,7 +23,7 @@ function camelKeys(value) {
 }
 
 export class AppApi {
-  constructor(request) { this.request = request; this.bookings = []; }
+  constructor(request) { this.request = request; this.bookings = []; this.database = new IsolatedDatabase(); }
   async call(method, path, data, token, status = 200) {
     if (['/signin', '/register'].includes(path)) await reserveAuthentication();
     const response = await this.request.fetch(`${process.env.API_URL}${path}`, {
@@ -72,8 +73,11 @@ export class AppApi {
   }
   view(f, token = f.owner.token) { return this.call('GET', `/reservations/${f.id}/group-order`, undefined, token); }
   async cleanup() {
-    for (const {id, token} of this.bookings) {
-      await this.call('DELETE', '/reservations', {id}, token);
+    try { await this.database.restore(); }
+    finally {
+      const results = await Promise.allSettled(this.bookings.map(({id, token}) => this.call('DELETE', '/reservations', {id}, token)));
+      const failures = results.filter(result => result.status === 'rejected');
+      if (failures.length) throw new AggregateError(failures.map(result => result.reason), 'Synthetic reservation cleanup failed');
     }
   }
 }

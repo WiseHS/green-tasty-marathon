@@ -75,6 +75,7 @@ public sealed class GroupOrderService(PostgresStore store)
             : order?.Status == OrderStatus.Submitted || ownerItems.Any(item => item.State != OrderItemState.Pending)
                 ? "The restaurant has already processed your order. Contact the waiter before making changes."
             : merged.Count == 0 ? "Add your dishes or wait for a guest to submit their selection."
+            : order is null ? "The reservation order was not found. Add your own selection before sending the group order."
             : merged.Any(item => item.Quantity <= 0 || !dishes.TryGetValue(item.DishId, out var dish) || dish.State != DishState.Available)
                 ? "An included dish is unavailable. Review the participant orders before sending." : null;
         var consolidated = Display(merged);

@@ -38,6 +38,8 @@ test('@ui @L2 owner sends merged dishes, excludes drafts and waiter sees the res
   await ui.signIn(f.owner); await ui.open(f.id);
   await expect(page.getByRole('button', {name: 'Send group order'})).toBeDisabled();
   await ui.submit();
+  expect((await api.call('GET', `/orders/${f.id}`, undefined, f.owner.token)).status).toBe(3); // SubmittedByCustomer
+  expect((await api.call('GET', `/guest/groups/${f.groupId}/status`)).status).toBe(1); // Submitted
   await expect(ui.summary).toContainText('Vegetable pasta × 3');
   await expect(ui.summary).toContainText('$54.00');
   await expect(ui.summary).not.toContainText('Berry dessert');
@@ -68,6 +70,18 @@ test('@ui @L3 owner removes a submitted guest and sees recalculated total', asyn
   await expect(ui.summary).toContainText('$18.00');
   await ui.submit();
   expect((await api.view(f)).consolidatedItems[0].quantity).toBe(1);
+  const staffContext = await page.context().browser().newContext({baseURL: process.env.UI_URL});
+  try {
+    const staffPage = await staffContext.newPage(), staffUi = new GroupPage(staffPage);
+    await staffUi.signIn({email: process.env.WAITER_USERNAME, password: process.env.WAITER_PASSWORD});
+    await staffPage.goto('/waiter-reservations');
+    await staffPage.locator('app-card-reservation').filter({hasText: f.owner.name})
+      .getByRole('button', {name: 'Pre-order', exact: true}).click();
+    const participants = staffPage.getByRole('region', {name: 'Group participants'});
+    await expect(participants).toContainText('Vegetable pasta × 1');
+    await expect(participants).not.toContainText('AQA Ready');
+    await expect(staffPage.locator('.order-summary')).toContainText('$18.00');
+  } finally { await staffContext.close(); }
 });
 
 test('@api @L1 only the owner can read an open group', async ({api}) => {
