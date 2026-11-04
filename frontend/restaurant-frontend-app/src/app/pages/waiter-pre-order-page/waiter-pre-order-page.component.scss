@@ -11,3 +11,4 @@
 .participants article { margin: 14px 0; } .participants p { margin: 8px 0; }
 :host ::ng-deep .preorder-list .dish-card { aspect-ratio: auto; min-height: 340px; padding-bottom: 24px; }
 @media(max-width: 600px) { .preorder-list { padding: 16px; grid-template-columns: 1fr; } .title { padding: 16px; } .order-summary, .participants, .breadcrumb { margin: 16px; } }
+.dish-request { padding: 8px 12px; background: #f0f6ed; border-left: 3px solid #568c47; white-space: pre-wrap; overflow-wrap: anywhere; }

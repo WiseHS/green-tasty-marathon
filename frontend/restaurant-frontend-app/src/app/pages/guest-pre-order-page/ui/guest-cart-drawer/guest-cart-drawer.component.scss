@@ -245,3 +245,15 @@
     height: 52px;
   }
 }
+.dish-request {
+  margin-top: 12px;
+  label { display: block; font-weight: 600; font-size: 14px; }
+  textarea { box-sizing: border-box; display: block; width: 100%; max-width: 100%; margin: 6px 0; padding: 8px; border: 1px solid #68866a; border-radius: 8px; font: inherit; resize: vertical; }
+  small { display: block; color: #4c554c; }
+}
+.request-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px;
+  button { padding: 6px 10px; border: 1px solid #2d6234; border-radius: 6px; color: #25552a; background: white; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: default; }
+  span { font-size: 13px; color: #25552a; }
+}

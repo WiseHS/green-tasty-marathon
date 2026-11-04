@@ -3,7 +3,7 @@ using APIHandler.Models.Dishes;
 
 namespace Restaurant.Web.GroupOrders;
 
-public record GroupDish(DishResponse Dish, int Quantity, decimal Total);
+public record GroupDish(DishResponse Dish, int Quantity, decimal Total, string Note = "");
 public record GroupParticipant(string Id, string Name, bool IsOwner, bool IsSubmitted,
     bool Included, List<GroupDish> Items, decimal Total);
 public record GroupOrderView(string ReservationId, string GroupReservationId, string TableName,

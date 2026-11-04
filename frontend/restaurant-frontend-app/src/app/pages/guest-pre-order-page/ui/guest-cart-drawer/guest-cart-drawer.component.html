@@ -35,6 +35,19 @@
                                         +
                                     </button>
                                 </div>
+                                <div class="dish-request">
+                                    <label [for]="'dish-request-' + it.dishId">Special request (optional)</label>
+                                    <textarea [id]="'dish-request-' + it.dishId" [attr.aria-label]="'Request for ' + it.title"
+                                        maxlength="300" rows="2" [disabled]="busy()" [value]="noteText(it)"
+                                        placeholder="No onions, sauce on the side..." (input)="changeNote(it, $event)"></textarea>
+                                    <small>Applies to every portion of this dish. {{ noteText(it).length }}/300</small>
+                                    <div class="request-actions">
+                                        <button type="button" [disabled]="busy() || noteText(it) === (it.note ?? '')" (click)="saveNote(it)">Save request</button>
+                                        @if (noteText(it) !== (it.note ?? '')) {
+                                            <button type="button" [disabled]="busy()" (click)="discardNote(it)">Discard changes</button>
+                                        } @else if (it.note) { <span role="status">Request saved</span> }
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="actions">
@@ -57,6 +70,7 @@
                 <div class="footer">
                     @if (error()) {
                         <p class="cart-error" role="alert">{{ error() }}</p>
+                        <button type="button" [disabled]="busy()" (click)="retryRequests.emit()">Reload saved requests</button>
                     }
                     <div class="total">
                         <span class="total-label">Grand Total</span>
@@ -66,11 +80,14 @@
                     <button
                         type="button"
                         class="submit"
-                        [disabled]="items().length === 0 || busy()"
+                        [disabled]="items().length === 0 || busy() || hasUnsavedRequests() || !!error()"
                         (click)="submitted.emit()"
                     >
                     {{ busy() ? 'Please wait...' : 'Submit Pre-Order' }}
                     </button>
+                    @if (hasUnsavedRequests()) {
+                        <p class="cart-error" role="status">Save or discard your dish requests before submitting.</p>
+                    }
                 </div>
             }
         </aside>

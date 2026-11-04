@@ -30,6 +30,18 @@ describe('GroupOrderPageComponent', () => {
   });
   afterEach(() => { fixture.destroy(); http.verify(); });
   const endpoint = 'https://test.api/reservations/reservation/group-order';
+  it('shows draft requests by participant but sends only included requests as literal text', fakeAsync(() => {
+    const dish = {id: 'pasta', name: 'Pasta', price: 18} as GroupOrderView['consolidatedItems'][number]['dish'];
+    const participants = view.participants.map(participant => ({...participant,
+      items: participant.isOwner ? [] : [{dish, quantity: 1, total: 18,
+        note: participant.included ? '<img src=x> no onions' : 'Draft-only request'}]}));
+    fixture.detectChanges(); tick(); http.expectOne(endpoint).flush({...view, participants}); fixture.detectChanges();
+    const summary = fixture.nativeElement.querySelector('[aria-label="Special requests to restaurant"]');
+    expect(summary.textContent).toContain('<img src=x> no onions');
+    expect(summary.textContent).not.toContain('Draft-only request'); expect(summary.querySelector('img')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Draft-only request');
+    fixture.destroy();
+  }));
   it('shows participants and excluded drafts, requiring review before sending', fakeAsync(() => {
     fixture.detectChanges(); tick(); http.expectOne(endpoint).flush(view); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Mary');

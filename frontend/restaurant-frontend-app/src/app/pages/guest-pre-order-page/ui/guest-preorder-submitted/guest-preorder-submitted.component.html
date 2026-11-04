@@ -49,6 +49,7 @@
                 <span class="item-title">{{ it.title }} × {{ it.qty }}</span>
                 <span class="item-price">{{ it.price * it.qty | currency: '$' }}</span>
             </div>
+            @if (it.note) { <p style="white-space: pre-wrap; overflow-wrap: anywhere"><strong>Request:</strong> {{ it.note }}</p> }
             }
         </div>
 

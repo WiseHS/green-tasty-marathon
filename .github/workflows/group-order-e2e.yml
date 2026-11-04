@@ -60,7 +60,18 @@ jobs:
             sleep 2
           done
           exit 1
+      - name: Typecheck frontend and test dish request components
+        id: frontend_checks
+        continue-on-error: true
+        working-directory: frontend/restaurant-frontend-app
+        run: |
+          npx tsc -p tsconfig.app.json --noEmit
+          npx tsc -p tsconfig.spec.json --noEmit
+          mkdir -p ../../aqa/group-order-e2e/unit-results
+          npx ng test --watch=false --browsers=ChromeHeadless --include='src/app/pages/guest-pre-order-page/**/*.spec.ts' --include='src/app/services/guest-sessions/*.spec.ts' --include='src/app/pages/group-order-page/*.spec.ts' | tee ../../aqa/group-order-e2e/unit-results/dish-requests.log
       - name: Install tests and browser
+        # Focused component checks avoid treating inherited unrelated failures as feature regressions.
+        # The full legacy suite is measured separately and documented in the release evidence.
         working-directory: aqa/group-order-e2e
         run: |
           npm ci
@@ -78,7 +89,8 @@ jobs:
           path: |
             aqa/group-order-e2e/playwright-report/
             aqa/group-order-e2e/test-results/
+            aqa/group-order-e2e/unit-results/
           retention-days: 7
       - name: Mark failed tests after publishing evidence
-        if: steps.tests.outcome == 'failure'
+        if: steps.tests.outcome == 'failure' || steps.frontend_checks.outcome == 'failure'
         run: exit 1

@@ -15,3 +15,5 @@ button:not(.send) { padding: 8px 12px; border: 1px solid #39732b; border-radius:
 .review input { margin-top: 5px; } .send { width: 100%; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 @media(max-width: 760px) { .layout { grid-template-columns: 1fr; } aside { position: static; } .group-order { padding: 16px; } }
+.dish-request { margin: 6px 0; padding: 8px 12px; border-left: 3px solid #568c47; background: #f0f6ed; white-space: pre-wrap; overflow-wrap: anywhere; }
+.requests-summary { margin: 16px 0; padding: 12px; border: 1px solid #9ab893; border-radius: 8px; background: #f0f6ed; p { white-space: pre-wrap; overflow-wrap: anywhere; } }

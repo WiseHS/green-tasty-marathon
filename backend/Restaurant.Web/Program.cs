@@ -131,13 +131,24 @@ app.MapMethods("/{**path}",["GET","POST","PUT","PATCH","DELETE"],async(HttpConte
         await using var operation=context.Request.Method=="GET" && !isGroupOrderRoute ? null : store.BeginOperation();
         if(operation is not null)await operation.Begin(context.RequestAborted);
         var groupOrderMatch=Regex.Match(path,@"^/reservations/([^/]+)/group-order(?:/submit)?$");
+        var dishRequestMatch=Regex.Match(path,@"^/guest/sessions/([^/]+)/dish-requests(?:/([^/]+))?$");
         APIGatewayProxyResponse response;
-        if(groupOrderMatch.Success && (context.Request.Method=="GET" && !path.EndsWith("/submit") || context.Request.Method=="POST" && path.EndsWith("/submit")))
+        if(dishRequestMatch.Success)
+            response=await new GuestDishRequestService(store).Handle(dishRequestMatch.Groups[1].Value,
+                dishRequestMatch.Groups[2].Success ? dishRequestMatch.Groups[2].Value : null,context.Request.Method,bearer,request.Body);
+        else if(groupOrderMatch.Success && (context.Request.Method=="GET" && !path.EndsWith("/submit") || context.Request.Method=="POST" && path.EndsWith("/submit")))
             response=await new GroupOrderService(store).Handle(groupOrderMatch.Groups[1].Value,context.Request.Method,claims!,request.Body);
         else if(context.Request.Method!="GET" && Regex.IsMatch(path,@"^/orders/[^/]+(?:/(?:submit|unsubmit))?$") && reservationMatch.Success &&
             await store.Get<GroupOrderSubmission>(reservationMatch.Groups[1].Value) is not null)
             response=new APIGatewayProxyResponse { StatusCode=409,Body="{\"error\":\"The consolidated group order has been sent and is locked.\"}",Headers=new Dictionary<string,string>{{"Content-Type","application/json"}} };
         else response=await function.FunctionHandler(request,new LambdaContext(app.Logger,context.TraceIdentifier));
+        if(context.Request.Method=="DELETE" && response.StatusCode<400)
+        {
+            var removedDish=Regex.Match(path,@"^/guest/sessions/([^/]+)/dishes$");
+            var removedGuest=Regex.Match(path,@"^/guest/groups/[^/]+/sessions/([^/]+)$");
+            if(removedDish.Success || removedGuest.Success)
+                await new GuestDishRequestService(store).Prune((removedDish.Success ? removedDish : removedGuest).Groups[1].Value);
+        }
         if(operation is not null && response.StatusCode<400)await operation.Commit(context.RequestAborted);
         context.Response.StatusCode=response.StatusCode;
         foreach(var header in response.Headers ?? new Dictionary<string,string>())

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,6 +26,10 @@ export class GroupOrderPageComponent implements OnInit {
   readonly busy = signal(false);
   readonly reviewed = signal(false);
   readonly removing = signal<string | null>(null);
+  readonly specialRequests = computed(() => (this.view()?.participants ?? [])
+    .filter(participant => participant.included)
+    .flatMap(participant => participant.items.filter(item => !!item.note)
+      .map(item => ({guest: participant.name, guestId: participant.id, ...item}))));
   ngOnInit(): void {
     this.route.paramMap.pipe(
       switchMap(parameters => {

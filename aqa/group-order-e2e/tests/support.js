@@ -60,7 +60,7 @@ export class AppApi {
     this.bookings.push({id, token: owner.token});
     const invite = await this.call('GET', `/reservations/${id}/invite-token`, undefined, owner.token);
     const group = await this.call('GET', `/guest/invites/${invite.token}`);
-    const f = {id, owner, staff: staff.idToken, groupId: group.groupReservationId};
+    const f = {id, owner, staff: staff.idToken, groupId: group.groupReservationId, inviteToken: invite.token};
     if (ownerDish) await this.call('POST', '/orders', {reservationId: id, orderItems: [{dishId: 'demo-pasta', quantity: 1}]}, owner.token, 201);
     if (guests) {
       f.ready = await this.guest(f, 'AQA Ready', 'demo-pasta', 2, true);

@@ -74,6 +74,20 @@ export class GuestSessionsService {
         );
     }
 
+    getDishRequests(guestSessionId: string, sessionToken: string) {
+        return this.http.get<{notes: {dishId: string; note: string}[]}>(
+            `${this.baseUrl}/guest/sessions/${guestSessionId}/dish-requests`,
+            {headers: this.authHeaders(sessionToken)}
+        );
+    }
+
+    saveDishRequest(guestSessionId: string, sessionToken: string, dishId: string, note: string) {
+        return this.http.put<{dishId: string; note: string}>(
+            `${this.baseUrl}/guest/sessions/${guestSessionId}/dish-requests/${dishId}`,
+            {note}, {headers: this.authHeaders(sessionToken)}
+        );
+    }
+
     private authHeaders(token: string) {
         return new HttpHeaders({ Authorization: `Bearer ${token}` });
     }

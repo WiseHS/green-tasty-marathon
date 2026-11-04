@@ -1,5 +1,5 @@
 import { DishListResponse } from '@app/models/dishes/dish-list-response.model';
-export interface GroupDish { dish: DishListResponse; quantity: number; total: number; }
+export interface GroupDish { dish: DishListResponse; quantity: number; total: number; note?: string; }
 export interface GroupParticipant {
   id: string; name: string; isOwner: boolean; isSubmitted: boolean; included: boolean;
   items: GroupDish[]; total: number;

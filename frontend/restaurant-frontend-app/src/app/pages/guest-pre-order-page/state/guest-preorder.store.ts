@@ -5,6 +5,7 @@ import { GuestInviteService } from '@app/services/reservation/guest-invite.servi
 import { GuestInvite } from '@app/models/reservations/guest-invite.model';
 import { GuestMenuDish } from '@app/services/guest-sessions/guest-sessions.service';
 import { GuestSessionsService } from '@app/services/guest-sessions/guest-sessions.service';
+import { getServerErrorMessage } from '@app/shared/helpers/http-error-helpers';
 
 export type GuestPreorderStatus = 'active' | 'submitted';
 
@@ -24,6 +25,7 @@ export interface GuestCartItem {
     price: number;
     imageUrl?: string;
     qty: number;
+    note?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -81,6 +83,9 @@ export class GuestPreorderStore {
         if (this.contextId() === id) return;
 
         this.contextId.set(id);
+        this.guestSessionId.set(null); this.guestSessionToken.set(null);
+        this.guestName.set(''); this.cartItems.set([]); this.status.set('active');
+        this.menuByCategory.set({}); this.menuLoading.set(false); this.cartError.set(null);
         void this.loadInviteByToken(id);
 
         const name = localStorage.getItem(this.key(id, 'guestName'));
@@ -115,13 +120,15 @@ export class GuestPreorderStore {
 
         try {
             const inv = await firstValueFrom(this.guestInviteService.getInvite$(token));
+            if (token !== this.contextId()) return;
             this.invite.set(inv);
         } catch (error) {
+            if (token !== this.contextId()) return;
             this.invite.set(null);
             const status = error instanceof HttpErrorResponse ? error.status : null;
             this.inviteError.set(status === 404 || status === 410 ? 'expired' : 'retryable');
         } finally {
-            this.inviteLoading.set(false);
+            if (token === this.contextId()) this.inviteLoading.set(false);
         }
     }
 
@@ -210,16 +217,28 @@ export class GuestPreorderStore {
 
         try {
             const res = await firstValueFrom(this.guestSessionsService.getMenu(id, token));
+            if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
             console.log('[menu response]', res);
             console.log('[menu dishes keys]', Object.keys(res.dishes ?? {}));
 
             this.menuByCategory.set(res.dishes ?? {});
+            try {
+                const requests = await firstValueFrom(this.guestSessionsService.getDishRequests(id, token));
+                if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
+                const notes = new Map(requests.notes.map(request => [request.dishId, request.note]));
+                this.cartItems.update(items => items.map(item => ({...item, note: notes.get(item.dishId) ?? ''})));
+                this.cartError.set(null);
+            } catch {
+                if (id === this.guestSessionId() && token === this.guestSessionToken())
+                    this.cartError.set('Could not load saved dish requests. Reopen the invitation to try again.');
+            }
         } catch (e) {
+            if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
             console.log('[menu error]', e);
             this.menuError.set('Failed to load menu');
             this.menuByCategory.set({});
         } finally {
-            this.menuLoading.set(false);
+            if (id === this.guestSessionId() && token === this.guestSessionToken()) this.menuLoading.set(false);
         }
     }
 
@@ -283,6 +302,24 @@ export class GuestPreorderStore {
         } finally {
             this.cartBusy.set(false);
         }
+    }
+
+    async saveNote(dishId: string, note: string): Promise<void> {
+        const sessionId = this.guestSessionId(), token = this.guestSessionToken();
+        if (!sessionId || !token || this.cartBusy() || this.status() !== 'active') return;
+        if (note.length > 300) {
+            this.cartError.set('Requests must be at most 300 characters.');
+            return;
+        }
+        this.cartBusy.set(true); this.cartError.set(null);
+        try {
+            const saved = await firstValueFrom(this.guestSessionsService.saveDishRequest(sessionId, token, dishId, note));
+            this.cartItems.update(items => items.map(item => item.dishId === dishId ? {...item, note: saved.note} : item));
+        } catch (error) {
+            this.cartError.set(error instanceof HttpErrorResponse
+                ? getServerErrorMessage(error) || 'Could not save this request. Please try again.'
+                : 'Could not save this request. Please try again.');
+        } finally { this.cartBusy.set(false); }
     }
 
     // call this only after API submit success

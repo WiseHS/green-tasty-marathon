@@ -65,7 +65,9 @@ public sealed class GroupOrderService(PostgresStore store)
                 true, ownDisplay, ownDisplay.Sum(item => item.Total)));
         foreach (var session in sessions.Where(session => !session.IsOwnerSession).OrderBy(session => session.Id))
         {
-            var items = Display(session.Dishes);
+            var requests = await store.Find<GuestDishRequest>(nameof(GuestDishRequest.SessionId), session.Id);
+            var requestsByDish = requests.ToDictionary(request => request.DishId, request => request.Note);
+            var items = Display(session.Dishes).Select(item => item with {Note = requestsByDish.GetValueOrDefault(item.Dish.Id, "")}).ToList();
             participants.Add(new(session.Id, session.GuestName, false, session.IsSubmitted,
                 session.IsSubmitted, items, items.Sum(item => item.Total)));
         }

@@ -97,8 +97,8 @@
 
 <!-- cart drawer -->
 <app-guest-cart-drawer [open]="isCartOpen()" [items]="store.cartItems()" [total]="store.total()"
-    [busy]="store.cartBusy()" [error]="store.cartError()" (closed)="closeCart()"
+    [busy]="store.cartBusy() || store.menuLoading()" [error]="store.cartError()" (closed)="closeCart()"
     (goToMenu)="closeCart()" (inc)="store.inc($event)" (dec)="store.dec($event)" (remove)="store.remove($event)"
-    (submitted)="store.submitPreorder()" />
+    (requestSaved)="store.saveNote($event.dishId, $event.note)" (retryRequests)="store.loadMenu()" (submitted)="store.submitPreorder()" />
 }
 }

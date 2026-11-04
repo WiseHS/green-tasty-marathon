@@ -18,6 +18,7 @@
         <article><strong>{{ participant.isOwner ? createdByName + ' (organizer)' : participant.name }}</strong>
           @for (item of participant.items; track item.dish.id) {
             <p>{{ item.dish.name }} × {{ item.quantity }} — {{ item.total | currency }}</p>
+            @if (item.note) { <p class="dish-request"><strong>Request:</strong> {{ item.note }}</p> }
           }
           <p>Subtotal: {{ participant.total | currency }}</p>
         </article>

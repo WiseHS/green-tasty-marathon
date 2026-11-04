@@ -26,6 +26,7 @@
             @if (participant.items.length === 0) { <p>No dishes selected yet.</p> }
             @for (item of participant.items; track item.dish.id) {
               <div class="item"><span>{{ item.dish.name }} × {{ item.quantity }}</span><strong>{{ item.total | currency }}</strong></div>
+              @if (item.note) { <p class="dish-request"><strong>Request:</strong> {{ item.note }}</p> }
             }
             <p class="subtotal">Participant total: {{ participant.total | currency }}</p>
             @if (group.status === 'open' && participant.isOwner) {
@@ -53,12 +54,21 @@
           <div class="item"><span>{{ item.dish.name }} × {{ item.quantity }}</span><strong>{{ item.total | currency }}</strong></div>
         } @empty { <p>No dishes are ready to send.</p> }
         <p class="grand-total">Total <strong>{{ group.total | currency }}</strong></p>
+        @if (specialRequests().length) {
+          <section aria-label="Special requests to restaurant" class="requests-summary">
+            <h3>Special requests ({{ specialRequests().length }})</h3>
+            @for (item of specialRequests(); track item.guestId + item.dish.id) {
+              <p><strong>{{ item.guest }} · {{ item.dish.name }} × {{ item.quantity }}</strong><br>{{ item.note }}</p>
+            }
+            <small>Only submitted guest selections and their saved requests are sent.</small>
+          </section>
+        }
         @if (group.status === 'open') {
           @if (group.readyGuests < group.invitedGuests) {
             <p class="notice">Some guests have not submitted. Their draft selections are excluded.</p>
           }
           @if (group.blockReason) { <p role="status">{{ group.blockReason }}</p> }
-          <label class="review"><input type="checkbox" [checked]="reviewed()" [disabled]="busy()" (change)="setReviewed($event)">I have reviewed the dishes, quantities and excluded guests.</label>
+          <label class="review"><input type="checkbox" [checked]="reviewed()" [disabled]="busy()" (change)="setReviewed($event)">I have reviewed the dishes, quantities, special requests and excluded guests.</label>
           <button type="button" class="button button--primary button--large send" [disabled]="!group.canSubmit || !reviewed() || busy() || !!error()" (click)="submit()">{{ busy() ? 'Sending...' : 'Send group order' }}</button>
         }
       </aside>
