@@ -16,6 +16,7 @@ public static class Database
             Password = credentials.Length > 1 ? Uri.UnescapeDataString(credentials[1]) : "",
             Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
             SslMode = SslMode.VerifyFull, MaxPoolSize = 10, Timeout = 30,
+            GssEncryptionMode = GssEncryptionMode.Disable,
             ApplicationName = "green-tasty-marathon"
         }.ConnectionString;
     }
