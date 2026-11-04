@@ -39,7 +39,7 @@ test('@ui @L2 owner sends merged dishes, excludes drafts and waiter sees the res
   await expect(page.getByRole('button', {name: 'Send group order'})).toBeDisabled();
   await ui.submit();
   expect((await api.call('GET', `/orders/${f.id}`, undefined, f.owner.token)).status).toBe(3); // SubmittedByCustomer
-  expect((await api.call('GET', `/guest/groups/${f.groupId}/status`)).status).toBe(1); // Submitted
+  expect((await api.call('GET', `/guest/groups/${f.groupId}/status`)).status).toBe('Submitted');
   await expect(ui.summary).toContainText('Vegetable pasta × 3');
   await expect(ui.summary).toContainText('$54.00');
   await expect(ui.summary).not.toContainText('Berry dessert');
