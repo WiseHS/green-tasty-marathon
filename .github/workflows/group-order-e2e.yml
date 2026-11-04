@@ -9,7 +9,8 @@ permissions:
   contents: read
 jobs:
   integrated:
-    runs-on: ubuntu-latest
+    # Pin the OS supported by the pinned Playwright browser build.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:
