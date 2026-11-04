@@ -6,6 +6,8 @@
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
         <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+        <!-- Non-commercial educational demo: exempt from NPOI's maintenance fee. -->
+        <AcceptNPOIOSMFLicense>true</AcceptNPOIOSMFLicense>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,11 +23,8 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
         <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
         <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
-        <PackageReference Include="NPOI" Version="2.7.4" />
+        <PackageReference Include="NPOI" Version="2.8.1" />
         <PackageReference Include="QuestPDF" Version="2025.1.1" />
-        <!-- NPOI also brings ImageSharp transitively; preserve the baseline pin.
-             Upload validation no longer decodes user files with this dependency. -->
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
         <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.14" />
         <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     </ItemGroup>
