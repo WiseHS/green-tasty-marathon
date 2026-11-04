@@ -67,7 +67,7 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 Verified: 146 backend tests; 33 API checks on a published Release build; TypeScript checks and frontend build passed. Browser registration/login and menu/location loading passed. Frontend tests remain 195 passing/47 failing; rerunning with the original development config produced the identical 47 failing test names. Bundle size remains 789.28 kB; existing style-budget and CommonJS warnings remain.
 
-Docker is not installed on the development machine. The Linux Docker build subsequently succeeded on Render and the deployed API passed all 33 smoke checks. Original report dependencies still include an ImageSharp version with NuGet advisories through NPOI; it is no longer used to decode uploaded user images. XML/PKCS cryptography dependencies were updated. Remaining dependency advisories need a separate dependency review before production use.
+Docker is not installed on the development machine. The Linux Docker build subsequently succeeded on Render and the deployed API passed all 33 smoke checks. The later dependency update described below removes ImageSharp entirely by upgrading NPOI. XML/PKCS cryptography dependencies were also updated.
 
 A subsequent final Release publish also succeeded, but Windows application-control policy blocked running that new published DLL. The earlier published Release build passed 33 checks; current-source checks are repeated through the normal SDK development launch. No Windows security policy was disabled or changed.
 
@@ -106,3 +106,13 @@ The owner header now displays the total portions in orders shown by the cart (st
 Verification: both TypeScript checks passed; production build passed with an initial bundle of 790.49 kB. Six cart regression tests passed in Chrome Headless. Full frontend suite: 200 passed, 47 failed; the failing test names match the recorded baseline. The lockfile change only updates the application version, with no dependency changes.
 
 This fix requires a manual deployment of the latest `feature/render-neon` commit for the frontend static site. It has not yet been verified on the public site; browser automation is currently unavailable. Backend deployment and database changes are not needed.
+
+## Dependency and order-error fixes — 2026-11-04 (publication pending)
+
+- Updated NPOI 2.7.4 to 2.8.1 and removed the explicit ImageSharp reference. The resolved dependency graph no longer contains ImageSharp. Direct ImageSharp 3.2.0 was evaluated but its build requires a license key, so that approach was not retained.
+- NPOI 2.8.1 ships an OSMF EULA. The project records acceptance for this non-commercial educational demonstration, which is exempt from its maintenance fee. Reassess those terms if repurposing the project commercially; see the package's `OSMFEULA.txt`.
+- Release publish succeeded. All 147 backend tests passed, including generation and reopening of an XLS report. NuGet audit with transitive packages reported no known vulnerable packages for `Restaurant.Web` in the configured source at verification time. Other compiler warnings remain.
+- Frontend 1.1.3 prevents order creation without a selected reservation and displays the server's rejection reason instead of the generic `400 OK` transport message. It does not bypass reservation status or the 30-minute cutoff. The specific cause of the user's rejected request was not confirmed from a server response.
+- Both TypeScript checks and production build passed (790.76 kB initial bundle). Full frontend suite: 202 passed, 46 failed. The previous failing menu creation stub was replaced with two passing regression tests; no new failing test names were introduced.
+
+Deploy the latest branch commit manually for both backend and frontend to publish these changes. Database migration is not required. These changes are locally verified; Linux deployment and public UI verification of this update remain pending.

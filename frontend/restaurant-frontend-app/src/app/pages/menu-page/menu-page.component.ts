@@ -10,6 +10,8 @@ import { DishSortingLabels, DishTypeLabels } from '@app/shared/mappers/dish-enum
 import { DishModalComponent } from '@app/components/dish-modal/dish-modal.component';
 import { PreOrdersService } from '@app/services/pre-orders/pre-orders.service';
 import {ToastService} from '@app/services/toast/toast.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { getServerErrorMessage } from '@app/shared/helpers/http-error-helpers';
 
 @Component({
   selector: 'app-menu-page',
@@ -139,6 +141,10 @@ export class MenuPageComponent implements OnInit {
   }
 
   addDishToCart(dish: DishListResponse): void {
+    if (!this.preOrderReservationId) {
+      this.toast.error('Select an active reservation in Reservations and click Pre-order first.', 'Reservation required');
+      return;
+    }
     this.orderService
       .addDishToPreOrderByReservationId(this.preOrderReservationId!, dish, 1)
       .subscribe({
@@ -146,7 +152,10 @@ export class MenuPageComponent implements OnInit {
           this.toast.success('Dish added to cart successfully!', 'Success');
         },
         error: (err) => {
-          this.toast.error((err as Error).message, 'Error');
+          const message = err instanceof HttpErrorResponse
+            ? getServerErrorMessage(err)
+            : (err as Error).message;
+          this.toast.error(message || 'Could not add the dish. Check that your reservation is active and the order is editable.', 'Error');
         },
       });
   }
