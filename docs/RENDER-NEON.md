@@ -133,3 +133,13 @@ Verification on the development Neon branch: **58 API checks passed**, including
 Release publish and **147 backend tests passed**. Frontend TypeScript checks and build passed (792.17 kB initial bundle); five new group screen tests passed, full suite **207 passed / 46 inherited failures**, with no new failing names. Local browser verification confirmed both the owner breakdown and the assigned waiter's consolidated order/buttons. Public publication status is recorded separately below.
 
 This completes the original group-order homework scope; it is not claimed as an additional competition feature. Previously sent personal orders are not silently converted. Open the group screen and explicitly confirm the consolidated order while the reservation remains editable. Restaurant-processed orders require contact with the waiter.
+
+### Public verification — 2026-11-04
+
+Application commit `e985707350e83f7f1f970dd2179af33df8f0fb80` is live on both free Render services. Backend deployment `dep-dblmc395efls73e71neg` succeeded in 1m 36s; static frontend deployment `dep-dblmccmtlv9c73c6en1g` succeeded in 43.8s. Environment, plans, unrelated services and existing customer orders were not changed.
+
+A separate synthetic account/reservation was created for verification. Public browser login, Reservations → Group order, the participant breakdown, review checkbox and Send group order all worked. The organizer's salad (12) plus a submitted guest's two pasta portions (36) produced a total of **48**; the second guest's draft dessert (9) was excluded. The cart updated from one to three portions, and the submitted view locked.
+
+Eleven public API assertions then passed: persisted browser submission/total; retry returns the same order ID; anonymous denial; personal-cart reopen blocked; new guest join blocked; assigned waiter reads the breakdown/total and two consolidated dish positions/three portions; waiter cannot submit as owner; dish confirmation succeeds and survives reload. The 58-check suite remains development-branch evidence; it was not run wholesale against the public database. Public browser checking used a separate in-app session and did not sign the user out of Chrome.
+
+Frontend dependency audit warnings and the 46 inherited failing tests remain separate maintenance work; backend NuGet audit results do not imply that every frontend dependency is free of known advisories. This release does not add scheduled emails, a broader Admin role or the extra competition feature.
