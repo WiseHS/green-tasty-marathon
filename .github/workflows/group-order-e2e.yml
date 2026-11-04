@@ -1,0 +1,81 @@
+name: Group pre-order E2E
+on:
+  push:
+    branches: [main, feature/render-neon]
+    paths: ['aqa/group-order-e2e/**', 'backend/**', 'frontend/**', '.github/workflows/group-order-e2e.yml']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-ci-only
+          POSTGRES_DB: restaurant
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: Host=localhost;Port=5432;Database=restaurant;Username=postgres;Password=ephemeral-ci-only;SSL Mode=Disable;GSS Encryption Mode=Disable
+      DATABASE_URL_UNPOOLED: Host=localhost;Port=5432;Database=restaurant;Username=postgres;Password=ephemeral-ci-only;SSL Mode=Disable;GSS Encryption Mode=Disable
+      JWT_SIGNING_KEY: ephemeral-ci-signing-key-not-used-outside-this-run-123456789
+      DEMO_WAITER_PASSWORD: CiOnly!Pass123
+      WAITER_USERNAME: demo-waiter@example.com
+      WAITER_PASSWORD: CiOnly!Pass123
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5080
+      UI_URL: http://localhost:4200
+      API_URL: http://127.0.0.1:5080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and prepare isolated backend
+        run: |
+          dotnet build backend/Restaurant.Web
+          dotnet run --no-build --project backend/Restaurant.Web -- --migrate
+          dotnet run --no-build --project backend/Restaurant.Web -- --seed-demo
+          dotnet run --no-build --project backend/Restaurant.Web > /tmp/backend.log 2>&1 &
+      - name: Start frontend
+        working-directory: frontend/restaurant-frontend-app
+        run: |
+          npm ci
+          npm start -- --host localhost > /tmp/frontend.log 2>&1 &
+      - name: Wait for both applications
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS "$API_URL/health/ready" >/dev/null && curl -fsS "$UI_URL/login" >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Install tests and browser
+        working-directory: aqa/group-order-e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run all scenarios
+        id: tests
+        continue-on-error: true
+        working-directory: aqa/group-order-e2e
+        run: npm test
+      - name: Preserve report and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: group-order-report
+          path: |
+            aqa/group-order-e2e/playwright-report/
+            aqa/group-order-e2e/test-results/
+          retention-days: 7
+      - name: Mark failed tests after publishing evidence
+        if: steps.tests.outcome == 'failure'
+        run: exit 1

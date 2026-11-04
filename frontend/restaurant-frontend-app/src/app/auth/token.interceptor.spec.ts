@@ -37,6 +37,27 @@ describe('tokenInterceptor', () => {
     httpMock.verify();
   });
 
+  it('uses the owner token when removing a participant from a group', () => {
+    const auth = TestBed.inject(AuthenticationService) as jasmine.SpyObj<AuthenticationService>;
+    auth.getTokens.and.returnValue({ idToken: 'owner-token' } as ReturnType<AuthenticationService['getTokens']>);
+    http.delete('https://test.api/guest/groups/group-id/sessions/session-id').subscribe();
+    const request = httpMock.expectOne('https://test.api/guest/groups/group-id/sessions/session-id');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer owner-token');
+    request.flush({});
+  });
+
+  it('preserves guest session credentials and the guest request body', () => {
+    const auth = TestBed.inject(AuthenticationService) as jasmine.SpyObj<AuthenticationService>;
+    auth.getTokens.and.returnValue({ idToken: 'owner-token' } as ReturnType<AuthenticationService['getTokens']>);
+    const body = {dishId: 'demo-pasta', quantity: 2};
+    http.post('https://test.api/guest/sessions/guest-id/dishes', body,
+      {headers: {Authorization: 'Bearer guest-token'}}).subscribe();
+    const request = httpMock.expectOne('https://test.api/guest/sessions/guest-id/dishes');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer guest-token');
+    expect(request.request.body).toEqual(body);
+    request.flush({});
+  });
+
   it('shows the server message in a toast for a 400 response', () => {
     http.post(URL, {}).subscribe({ error: () => undefined });
 

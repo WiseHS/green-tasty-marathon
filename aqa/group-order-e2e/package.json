@@ -1,0 +1,7 @@
+{
+  "name": "green-tasty-group-order-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "playwright test", "test:ui": "playwright test --grep @ui", "test:api": "playwright test --grep @api", "report": "playwright show-report"},
+  "devDependencies": {"@playwright/test": "1.56.1"}
+}
