@@ -101,7 +101,19 @@ test.describe('Disposable database only', () => {
   test('@ui @L2 @isolated missing order blocks submission even with a submitted guest', async ({page, api}) => {
     const f = await api.fixture(), view = await api.view(f);
     await api.database.change('Order', view.orderId, null);
-    await expectBlocked(page, api, f, 'The reservation order was not found. Add your own selection before sending the group order.');
+    await expectBlocked(page, api, f, 'The reservation order was not found. Refresh the reservation or contact the restaurant.');
+  });
+
+  test('@ui @L2 @isolated organizer may send guest dishes without ordering food personally', async ({page, api}) => {
+    const f = await api.fixture(), view = await api.view(f);
+    await api.database.change('Order', view.orderId, {dishes: []});
+    const ui = new GroupPage(page);
+    await ui.signIn(f.owner); await ui.open(f.id);
+    await expect(ui.participant('Your order (organizer)')).toContainText('$0.00');
+    await expect(ui.summary).toContainText('$36.00');
+    await ui.submit();
+    const sent = await api.view(f);
+    expect(sent.total).toBe(36); expect(sent.consolidatedItems[0].quantity).toBe(2);
   });
 
   test('@ui @L2 @isolated canceled reservation cannot be sent', async ({page, api}) => {

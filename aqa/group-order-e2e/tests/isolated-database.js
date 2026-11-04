@@ -16,9 +16,10 @@ export class IsolatedDatabase {
   async change(kind, id, patch) {
     if (!['Reservation', 'GroupReservation', 'GuestSession', 'Dish', 'Order'].includes(kind)) throw new Error('Unsupported fixture kind');
     if (!this.client) await this.connect();
-    const key = `${kind}:${id}`;
-    const result = await this.client.query('SELECT payload FROM app_documents WHERE kind=$1 AND id=$2', [kind, id]);
+    const result = await this.client.query("SELECT id,payload FROM app_documents WHERE kind=$1 AND (id=$2 OR ($1='Order' AND payload->>'orderId'=$2))", [kind, id]);
     if (result.rowCount !== 1) throw new Error(`Fixture ${kind} was not found`);
+    id = result.rows[0].id; // Orders have a composite persistence key; API IDs are not storage keys.
+    const key = `${kind}:${id}`;
     if (!this.originals.has(key)) this.originals.set(key, {kind, id, payload: result.rows[0].payload});
     if (patch === null) await this.client.query('DELETE FROM app_documents WHERE kind=$1 AND id=$2', [kind, id]);
     else await this.client.query('UPDATE app_documents SET payload=$3::jsonb WHERE kind=$1 AND id=$2',

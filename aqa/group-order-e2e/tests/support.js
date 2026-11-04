@@ -2,16 +2,19 @@ import { randomUUID, randomInt } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { IsolatedDatabase } from './isolated-database.js';
+import { readFile, writeFile } from 'node:fs/promises';
 
-const authenticationTimes = [];
 async function reserveAuthentication() {
   // Respect the app's 20/minute auth limit. This paces requests, not UI readiness.
-  while (authenticationTimes.length && Date.now() - authenticationTimes[0] >= 61_000) authenticationTimes.shift();
+  const path = process.env.AQA_AUTH_BUDGET_FILE;
+  if (!path) throw new Error('Authentication pacing requires Playwright global setup.');
+  const authenticationTimes = JSON.parse(await readFile(path, 'utf8')).filter(time => Date.now() - time < 61_000);
   if (authenticationTimes.length >= 18) {
     await delay(61_000 - (Date.now() - authenticationTimes[0]));
     return reserveAuthentication();
   }
   authenticationTimes.push(Date.now());
+  await writeFile(path, JSON.stringify(authenticationTimes));
 }
 
 // Legacy Lambda DTOs use PascalCase, portable host DTOs use camelCase.
