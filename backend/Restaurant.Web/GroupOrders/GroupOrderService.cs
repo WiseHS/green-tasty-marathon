@@ -58,8 +58,11 @@ public sealed class GroupOrderService(PostgresStore store)
         var location = table is null ? null : await store.Get<Location>(table.LocationId);
         var participants = new List<GroupParticipant>();
         var ownDisplay = Display(ownerItems);
-        participants.Add(new("owner", "Your order", true, order?.Status is OrderStatus.SubmittedByCustomer or OrderStatus.Submitted,
-            true, ownDisplay, ownDisplay.Sum(item => item.Total)));
+        // A genuinely empty group has no participants yet (the homework API contract).
+        // Show the organizer alongside joined guests or their own selected dishes.
+        if (ownDisplay.Count > 0 || sessions.Any(session => !session.IsOwnerSession))
+            participants.Add(new("owner", "Your order", true, order?.Status is OrderStatus.SubmittedByCustomer or OrderStatus.Submitted,
+                true, ownDisplay, ownDisplay.Sum(item => item.Total)));
         foreach (var session in sessions.Where(session => !session.IsOwnerSession).OrderBy(session => session.Id))
         {
             var items = Display(session.Dishes);

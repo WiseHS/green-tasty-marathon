@@ -20,6 +20,9 @@ test('@ui @L1 owner sees submitted and draft selections and live totals', async 
 
 test('@ui @L1 empty group explains why sending is disabled', async ({page, api}) => {
   const f = await api.fixture({guests: false, ownerDish: false}), ui = new GroupPage(page);
+  const empty = await api.view(f);
+  expect(empty.participants).toEqual([]);
+  expect(empty.total).toBe(0);
   await ui.signIn(f.owner); await ui.open(f.id);
   await expect(page.getByText('No guests have joined yet.', {exact: false})).toBeVisible();
   await expect(ui.summary).toContainText('$0.00');

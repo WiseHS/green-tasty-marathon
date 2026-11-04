@@ -31,7 +31,7 @@ Start the backend and frontend using the repository deployment instructions. The
 
 This is initial coverage across L1–L3, not a claim that every listed homework edge case is covered. Further cases include unavailable dishes, expired bookings, last guest removal and all negative submission conditions as separate UI scenarios.
 
-Our implementation always includes an organizer row, even for a group without guests; `joinedGuests: 0`, total 0 and no ready dishes express the empty state. This differs from the homework's literal `participants: []` empty-group expectation and is recorded explicitly. The organizer's current selection is included without a separate guest submission. Open group access: anonymous 401, unrelated customer 403, guest session token 401, assigned waiter 404 until submission; assigned waiter can read the immutable submitted snapshot. Repeated submit is idempotent (200, same order ID), stale revision 409, empty submission 400. These choices describe our current implementation rather than silently changing expected results.
+A group without joined guests or organizer dishes returns `participants: []` and `total: 0`. Once dishes or guests exist, the organizer row is shown. The organizer's current selection is included without a separate guest submission. Open group access: anonymous 401, unrelated customer 403, guest session token 401, assigned waiter 404 until submission; assigned waiter can read the immutable submitted snapshot. Repeated submit is idempotent (200, same order ID), stale revision 409, empty submission 400. These choices describe our current implementation rather than silently changing expected results.
 
 ## Data and evidence
 

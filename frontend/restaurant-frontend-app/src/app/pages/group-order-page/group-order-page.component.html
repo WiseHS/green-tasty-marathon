@@ -43,6 +43,9 @@
           </article>
         }
         @if (group.joinedGuests === 0) { <p>No guests have joined yet. Share your reservation invitation with them.</p> }
+        @if (group.status === 'open' && group.participants.length === 0) {
+          <a [routerLink]="'/menu'" [queryParams]="{preOrder: true, reservationId: group.reservationId}">Choose your dishes</a>
+        }
       </section>
       <aside aria-label="Consolidated order">
         <h2>{{ group.status === 'submitted' ? 'Sent to restaurant' : 'Ready to send' }}</h2>
