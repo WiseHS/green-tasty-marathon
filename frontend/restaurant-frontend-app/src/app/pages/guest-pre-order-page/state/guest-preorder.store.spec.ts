@@ -28,9 +28,9 @@ describe('Saved guest dish requests', () => {
   });
   it('loads authoritative requests when restoring the menu', async () => {
     const pending = store.loadMenu();
-    http.expectOne('https://test.api/guest/sessions/guest/menu').flush({dishes: {}});
-    await Promise.resolve();
     http.expectOne('https://test.api/guest/sessions/guest/dish-requests').flush({notes: [{dishId: 'pasta', note: 'Sauce separately'}]});
+    await Promise.resolve();
+    http.expectOne('https://test.api/guest/sessions/guest/menu').flush({dishes: {}});
     await pending; expect(store.cartItems()[0].note).toBe('Sauce separately');
   });
   it('does not save oversized requests or a submitted selection', async () => {
@@ -46,12 +46,22 @@ describe('Saved guest dish requests', () => {
     http.expectOne('https://test.api/guest/invites/request-test-new-invite').flush({});
     await Promise.resolve();
   });
-  it('ignores a late menu response from a previous guest session', async () => {
+  it('ignores a late cart response from a previous guest session', async () => {
     const pending = store.loadMenu();
     store.guestSessionId.set('different-guest'); store.guestSessionToken.set('different-token');
-    http.expectOne('https://test.api/guest/sessions/guest/menu').flush({dishes: {OldCategory: []}});
+    http.expectOne('https://test.api/guest/sessions/guest/dish-requests').flush({notes: []});
     await pending;
     expect(store.menuByCategory()).toEqual({});
-    http.expectNone('https://test.api/guest/sessions/guest/dish-requests');
+    http.expectNone('https://test.api/guest/sessions/guest/menu');
+  });
+  it('restores a submitted cart and requests from the server without reopening the menu', async () => {
+    store.cartItems.set([]);
+    const pending = store.loadMenu();
+    http.expectOne('https://test.api/guest/sessions/guest/dish-requests').flush({notes: [{dishId: 'pasta', note: 'No onions'}],
+      guestName: 'Saved guest', isSubmitted: true, items: [{dishId: 'pasta', title: 'Pasta', price: 18, qty: 2, note: 'No onions'}]});
+    await pending;
+    expect(store.status()).toBe('submitted'); expect(store.guestName()).toBe('Saved guest');
+    expect(store.cartItems()[0].note).toBe('No onions'); expect(store.total()).toBe(36);
+    http.expectNone('https://test.api/guest/sessions/guest/menu');
   });
 });

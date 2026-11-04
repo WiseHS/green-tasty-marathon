@@ -28,7 +28,23 @@ public sealed class GuestDishRequestService(PostgresStore store)
         if (method == "GET" && dishId is null)
         {
             var notes = await store.Find<GuestDishRequest>(nameof(GuestDishRequest.SessionId), sessionId);
-            return Reply(200, new {notes = notes.Where(note => selected.Contains(note.DishId)).Select(note => new {note.DishId, note.Note})});
+            var notesByDish = notes.ToDictionary(note => note.DishId, note => note.Note);
+            var currentGroup = await store.Get<GroupReservation>(session.GroupReservationId);
+            var snapshot = currentGroup is null ? null : await store.Get<GroupOrderSubmission>(currentGroup.ReservationId);
+            var sent = snapshot?.View.Participants.FirstOrDefault(participant => participant.Id == sessionId && participant.Included);
+            var items = new List<object>();
+            if (sent is not null)
+                foreach (var item in sent.Items)
+                    items.Add(new {dishId = item.Dish.Id, title = item.Dish.Name, price = item.Dish.Price,
+                        qty = item.Quantity, imageUrl = item.Dish.ImageUrl, note = item.Note});
+            else foreach (var item in session.Dishes)
+            {
+                var dish = await store.Get<Dish>(item.DishId);
+                if (dish is not null) items.Add(new {dishId = dish.Id, title = dish.Name, price = dish.Price,
+                    qty = item.Quantity, imageUrl = dish.ImageUrl, note = notesByDish.GetValueOrDefault(item.DishId, "")});
+            }
+            return Reply(200, new {notes = notes.Where(note => selected.Contains(note.DishId)).Select(note => new {note.DishId, note.Note}),
+                guestName = session.GuestName, isSubmitted = session.IsSubmitted, items});
         }
         if (method != "PUT" || dishId is null) return Reply(405, new {error = "This request method is not supported."});
         var group = await store.Get<GroupReservation>(session.GroupReservationId);

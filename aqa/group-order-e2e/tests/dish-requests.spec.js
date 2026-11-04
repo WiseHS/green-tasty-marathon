@@ -32,6 +32,9 @@ test('@ui @feature-requests guest saves a request and owner sends it to the wait
   await page.getByRole('button', {name: 'Submit Pre-Order', exact: true}).click();
   await expect(page.getByRole('heading', {name: 'Pre-Order Submitted!', exact: true})).toBeVisible();
   await expect(page.getByText(note, {exact: false})).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', {name: 'Pre-Order Submitted!', exact: true})).toBeVisible();
+  await expect(page.getByText(note, {exact: false})).toBeVisible();
   const ui = new GroupPage(page);
   await ui.signIn(f.owner); await ui.open(f.id);
   await expect(page.getByRole('region', {name: 'Special requests to restaurant'})).toContainText(note);

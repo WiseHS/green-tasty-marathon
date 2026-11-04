@@ -216,26 +216,24 @@ export class GuestPreorderStore {
         this.menuError.set(null);
 
         try {
+            const requests = await firstValueFrom(this.guestSessionsService.getDishRequests(id, token));
+            if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
+            const notes = new Map(requests.notes.map(request => [request.dishId, request.note]));
+            this.cartItems.update(items => requests.items ?? items.map(item => ({...item, note: notes.get(item.dishId) ?? ''})));
+            if (requests.guestName) this.guestName.set(requests.guestName);
+            this.cartError.set(null);
+            if (requests.isSubmitted) {
+                this.status.set('submitted');
+                return;
+            }
             const res = await firstValueFrom(this.guestSessionsService.getMenu(id, token));
             if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
-            console.log('[menu response]', res);
-            console.log('[menu dishes keys]', Object.keys(res.dishes ?? {}));
-
             this.menuByCategory.set(res.dishes ?? {});
-            try {
-                const requests = await firstValueFrom(this.guestSessionsService.getDishRequests(id, token));
-                if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
-                const notes = new Map(requests.notes.map(request => [request.dishId, request.note]));
-                this.cartItems.update(items => items.map(item => ({...item, note: notes.get(item.dishId) ?? ''})));
-                this.cartError.set(null);
-            } catch {
-                if (id === this.guestSessionId() && token === this.guestSessionToken())
-                    this.cartError.set('Could not load saved dish requests. Reopen the invitation to try again.');
-            }
         } catch (e) {
             if (id !== this.guestSessionId() || token !== this.guestSessionToken()) return;
             console.log('[menu error]', e);
             this.menuError.set('Failed to load menu');
+            this.cartError.set('Could not refresh your saved cart and requests. Reload saved requests to try again.');
             this.menuByCategory.set({});
         } finally {
             if (id === this.guestSessionId() && token === this.guestSessionToken()) this.menuLoading.set(false);

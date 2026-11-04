@@ -75,7 +75,8 @@ export class GuestSessionsService {
     }
 
     getDishRequests(guestSessionId: string, sessionToken: string) {
-        return this.http.get<{notes: {dishId: string; note: string}[]}>(
+        return this.http.get<{notes: {dishId: string; note: string}[]; guestName?: string; isSubmitted?: boolean;
+            items?: {dishId: string; title: string; price: number; qty: number; imageUrl?: string; note?: string}[]}>(
             `${this.baseUrl}/guest/sessions/${guestSessionId}/dish-requests`,
             {headers: this.authHeaders(sessionToken)}
         );
