@@ -18,7 +18,7 @@ The original Lambda/Terraform source and EPAM attribution remain in the reposito
 
 Local env loading is enabled only with `ASPNETCORE_ENVIRONMENT=Development` and a working directory of `backend/Restaurant.Web`. Production uses injected environment variables. Database URLs belong exclusively on the server. TLS verifies the certificate and hostname. The app uses pooled connections, and migrations use `DATABASE_URL_UNPOOLED`.
 
-The current local context uses `dev-render-neon`, created from `production` with a seven-day TTL. Do not use this temporary branch for the public deployment. Production has not been migrated or seeded by this development work.
+The current local context uses `dev-render-neon`, created from `production` with a seven-day TTL. Do not use this temporary branch for the public deployment. The public deployment uses the permanent `production` branch, which has been explicitly migrated and seeded with demonstration data.
 
 ## Local launch (PowerShell)
 
@@ -67,7 +67,7 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 Verified: 146 backend tests; 33 API checks on a published Release build; TypeScript checks and frontend build passed. Browser registration/login and menu/location loading passed. Frontend tests remain 195 passing/47 failing; rerunning with the original development config produced the identical 47 failing test names. Bundle size remains 789.28 kB; existing style-budget and CommonJS warnings remain.
 
-Docker is not installed on the development machine, so the Linux Docker build and actual Render deployment remain unverified. Original report dependencies still include an ImageSharp version with NuGet advisories through NPOI; it is no longer used to decode uploaded user images. XML/PKCS cryptography dependencies were updated. Remaining dependency advisories need a separate dependency review before production use.
+Docker is not installed on the development machine. The Linux Docker build subsequently succeeded on Render and the deployed API passed all 33 smoke checks. Original report dependencies still include an ImageSharp version with NuGet advisories through NPOI; it is no longer used to decode uploaded user images. XML/PKCS cryptography dependencies were updated. Remaining dependency advisories need a separate dependency review before production use.
 
 A subsequent final Release publish also succeeded, but Windows application-control policy blocked running that new published DLL. The earlier published Release build passed 33 checks; current-source checks are repeated through the normal SDK development launch. No Windows security policy was disabled or changed.
 
@@ -82,4 +82,19 @@ The migration is prepared on Git branch `feature/render-neon`. Select that branc
 3. Deploy the static frontend with `BACKEND_URL` set to the actual backend HTTPS URL. Build: `npm ci --no-audit --no-fund && npm run build`. Publish directory: `dist/restaurant-frontend-app/browser`, relative to the frontend root. Rewrite all client routes to `/index.html`.
 4. Verify `/health/ready`, browser registration/login, images, booking, guest invite/cart, and order submission on the real public URLs. Check CORS using the actual frontend origin.
 
-The free backend can sleep between requests. Recheck account quotas and provider terms at deployment time. No Render services have been created by the local migration work.
+The free backend can sleep between requests. Recheck account quotas and provider terms at deployment time.
+
+## Public deployment verification — 2026-11-04
+
+- Frontend: https://green-tasty-marathon.onrender.com — free static site, service `srv-dbl3torncjis73e1o2qg`.
+- Backend: https://green-tasty-api.onrender.com — free Docker web service in Frankfurt, service `srv-dbl3stjncjis73e1m2r0`.
+- Render project: `Green tasty marathon`, project `prj-d87dj94m0tmc739q22ig`. Existing unrelated services were not changed.
+- Application source: commit `225edb3cac183c443844522ad4d976e6e3d16093`, branch `feature/render-neon`. Both cloud builds succeeded.
+- Neon project `cold-shadow-92100701`, permanent production branch `br-dawn-hall-b9gxbzic`. Production secrets are supplied only through Render environment variables; they are not committed.
+- `GET /health/ready`: 200. Public API smoke script: **33 checks passed**, including persisted bookings/orders, concurrent booking exclusion, guest cart submission, signed images and access control. Only synthetic demo records were used.
+- Menu GET: 200 with the actual frontend origin allowed. Sign-in POST preflight: 204 with the same allowed origin. Frontend `/reservations`: 200 HTML through the SPA rewrite.
+- Public browser verification showed the three dishes and restaurant with six tables. Public UI registration/login still needs a browser check; local browser registration/login and public API authentication passed. Browser automation was unavailable during the final verification session.
+- The static build uses `BACKEND_URL=https://green-tasty-api.onrender.com`, Node 24.22.2. Backend `FRONTEND_ORIGIN` is the actual public frontend URL.
+- Services were connected using Public Git Repository. Subsequent pushes do not automatically redeploy this setup; deploy the chosen commit manually in Render. `render.yaml` remains a reference for recreating the configuration.
+
+The 47 inherited frontend test failures and the email/report limitations above remain. Deployment does not constitute an additional competition feature or complete acceptance testing.
