@@ -98,3 +98,11 @@ The free backend can sleep between requests. Recheck account quotas and provider
 - Services were connected using Public Git Repository. Subsequent pushes do not automatically redeploy this setup; deploy the chosen commit manually in Render. `render.yaml` remains a reference for recreating the configuration.
 
 The 47 inherited frontend test failures and the email/report limitations above remain. Deployment does not constitute an additional competition feature or complete acceptance testing.
+
+## Cart badge fix — frontend 1.1.2 (publication pending)
+
+The owner header now displays the total portions in orders shown by the cart (statuses 0, 1 and 3), across reservations. It loads the saved count on login and refreshes after successful create, quantity edit, deletion, submit and unsubmit requests. Failed writes do not alter the count; failed refreshes retain the last confirmed value. Logout resets it and cancels pending reads for the previous account. Desktop and mobile buttons include the count in their accessible labels. The guest invitation cart has its own reactive portion count. Empty carts hide the badge.
+
+Verification: both TypeScript checks passed; production build passed with an initial bundle of 790.49 kB. Six cart regression tests passed in Chrome Headless. Full frontend suite: 200 passed, 47 failed; the failing test names match the recorded baseline. The lockfile change only updates the application version, with no dependency changes.
+
+This fix requires a manual deployment of the latest `feature/render-neon` commit for the frontend static site. It has not yet been verified on the public site; browser automation is currently unavailable. Backend deployment and database changes are not needed.

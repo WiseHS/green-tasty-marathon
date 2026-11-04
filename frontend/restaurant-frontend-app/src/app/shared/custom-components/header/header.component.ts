@@ -4,7 +4,8 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UserModel } from '@app/auth/models/user.model';
 import { AuthenticationService } from '@app/auth/services/authentication.service';
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, merge, of, EMPTY, switchMap, catchError } from 'rxjs';
+import { PreOrdersService } from '@app/services/pre-orders/pre-orders.service';
 import { NotificationsService } from '@app/services/notifications/notifications.service';
 import { Notification } from '@app/models/notifications/notification.model';
 import { CartComponent } from '@app/components/cart/cart.component';
@@ -44,6 +45,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private pollingSubscription?: Subscription;
   private userSubscription?: Subscription;
+  private cartSubscription?: Subscription;
+  readonly cartQuantity = signal(0);
+  private readonly preOrdersService = inject(PreOrdersService);
 
   protected readonly authService = inject(AuthenticationService);
   private readonly notificationsService = inject(NotificationsService);
@@ -74,12 +78,29 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.userSubscription = this.authService.user$.subscribe((u) => this.user.set(u));
+    this.cartSubscription = this.authService.user$.pipe(
+      switchMap((user) => {
+        this.cartQuantity.set(0);
+        if (user?.role !== Roles.CUSTOMER) return EMPTY;
+        return merge(of(undefined), this.preOrdersService.cartChanged).pipe(
+          switchMap(() => this.preOrdersService.getPreOrders().pipe(
+            catchError(() => EMPTY),
+          )),
+        );
+      }),
+    ).subscribe((orders) => {
+      this.cartQuantity.set(orders
+        .filter((order) => [0, 1, 3].includes(order.status))
+        .reduce((total, order) => total + order.orderItems.reduce(
+          (quantity, item) => quantity + item.quantity, 0), 0));
+    });
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
     this.stopNotificationsPolling();
     this.userSubscription?.unsubscribe();
+    this.cartSubscription?.unsubscribe();
   }
 
   startNotificationsPolling() {

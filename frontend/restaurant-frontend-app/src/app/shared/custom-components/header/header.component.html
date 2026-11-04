@@ -51,9 +51,10 @@
       @if (user()?.role === Roles.CUSTOMER && !isGuestPreorderRoute) {
         @if (!showCart()) {
           <div>
-            <button type="button" class="icon-button icon-button--large" (click)="toggleCart()">
+            <button type="button" class="icon-button icon-button--large cart-trigger" [attr.aria-label]="'Cart, ' + cartQuantity() + ' portions'" (click)="toggleCart()">
               <img src="assets/svg/cart-empty.svg" alt="cart icon" class="action-icon" />
               <h5> Cart</h5>
+              @if (cartQuantity() > 0) { <span class="cart-badge" aria-live="polite">{{ cartQuantity() }}</span> }
             </button>
           </div>
         }
@@ -144,12 +145,13 @@
     }
 
     @if (user()?.role === Roles.CUSTOMER && !isGuestPreorderRoute) {
-      <button class="icon-button icon-button--small" type="button"  (click)="toggleCart()">
+      <button class="icon-button icon-button--small cart-trigger" [attr.aria-label]="'Cart, ' + cartQuantity() + ' portions'" type="button" (click)="toggleCart()">
         <img
           [src]="'assets/svg/cart-empty.svg'"
           alt="cart icon"
           class="action-icon"
         />
+        @if (cartQuantity() > 0) { <span class="cart-badge" aria-live="polite">{{ cartQuantity() }}</span> }
       </button>
     }
 

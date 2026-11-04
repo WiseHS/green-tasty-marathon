@@ -36,6 +36,9 @@ export class GuestPreOrderPageComponent {
 
     readonly store = inject(GuestPreorderStore);
     readonly isCartOpen = signal(false);
+    readonly cartQuantity = computed(() =>
+        this.store.cartItems().reduce((quantity, item) => quantity + item.qty, 0)
+    );
     readonly selectedCategory = signal<string | null>(null);
     readonly selectedSort = signal<'recommended' | 'price-asc' | 'price-desc'>('recommended');
 

@@ -536,3 +536,21 @@
   }
 
 }
+
+.cart-trigger { position: relative; }
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 12px;
+  background: #2f701b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  pointer-events: none;
+}

@@ -24,8 +24,9 @@
         }
     </div>
 
-    <button type="button" class="cart-btn" (click)="openCart()" aria-label="Open cart">
+    <button type="button" class="cart-btn" (click)="openCart()" [attr.aria-label]="'Open cart, ' + cartQuantity() + ' portions'">
         <img src="assets/svg/cart-empty.svg" alt="" />
+        @if (cartQuantity() > 0) { <span class="cart-badge" aria-live="polite">{{ cartQuantity() }}</span> }
     </button>
 </div>
 

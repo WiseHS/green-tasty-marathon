@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '@app/shared/config/api-base-url.token';
 import { Order } from '@app/models/orders/order.model';
 import { DishListResponse } from '@app/models/dishes/dish-list-response.model';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, Subject, tap } from 'rxjs';
 import { CreateOrderRequest } from '@app/models/cart/create-order-request.model';
 
 @Injectable({
@@ -12,6 +12,7 @@ import { CreateOrderRequest } from '@app/models/cart/create-order-request.model'
 export class PreOrdersService {
   private readonly baseUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
+  readonly cartChanged = new Subject<void>();
 
   getPreOrders() {
     return this.http.get<Order[]>(`${this.baseUrl}/orders`);
@@ -64,7 +65,8 @@ export class PreOrdersService {
       })),
     };
 
-    return this.http.post<Order>(`${this.baseUrl}/orders`, createOrderRequest);
+    return this.http.post<Order>(`${this.baseUrl}/orders`, createOrderRequest)
+      .pipe(tap(() => this.cartChanged.next()));
   }
 
   editPreOrderByReservationId(reservationId: string, order: Order) {
@@ -77,19 +79,23 @@ export class PreOrdersService {
       return this.cancelPreOrderByReservationId(reservationId);
     }
 
-    return this.http.put(`${this.baseUrl}/orders/${reservationId}`, { orderItems });
+    return this.http.put(`${this.baseUrl}/orders/${reservationId}`, { orderItems })
+      .pipe(tap(() => this.cartChanged.next()));
   }
 
   cancelPreOrderByReservationId(reservationId: string) {
-    return this.http.delete(`${this.baseUrl}/orders/${reservationId}`);
+    return this.http.delete(`${this.baseUrl}/orders/${reservationId}`)
+      .pipe(tap(() => this.cartChanged.next()));
   }
 
   submitPreOrderByReservationId(reservationId: string) {
-    return this.http.post(`${this.baseUrl}/orders/${reservationId}/submit`, {});
+    return this.http.post(`${this.baseUrl}/orders/${reservationId}/submit`, {})
+      .pipe(tap(() => this.cartChanged.next()));
   }
 
   unsubmitPreOrderByReservationId(reservationId: string) {
-    return this.http.post(`${this.baseUrl}/orders/${reservationId}/unsubmit`, {});
+    return this.http.post(`${this.baseUrl}/orders/${reservationId}/unsubmit`, {})
+      .pipe(tap(() => this.cartChanged.next()));
   }
 
   confirmDishInOrder(reservationId: string, dishId: string) {
