@@ -5,6 +5,7 @@ using Npgsql;
 using Restaurant.Web;
 using Restaurant.Web.Auth;
 using Restaurant.Web.Persistence;
+using Restaurant.Web.GroupOrders;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -126,9 +127,17 @@ app.MapMethods("/{**path}",["GET","POST","PUT","PATCH","DELETE"],async(HttpConte
     };
     try
     {
-        await using var operation=context.Request.Method=="GET" ? null : store.BeginOperation();
+        var isGroupOrderRoute=Regex.IsMatch(path,@"^/reservations/[^/]+/group-order(?:/submit)?$");
+        await using var operation=context.Request.Method=="GET" && !isGroupOrderRoute ? null : store.BeginOperation();
         if(operation is not null)await operation.Begin(context.RequestAborted);
-        var response=await function.FunctionHandler(request,new LambdaContext(app.Logger,context.TraceIdentifier));
+        var groupOrderMatch=Regex.Match(path,@"^/reservations/([^/]+)/group-order(?:/submit)?$");
+        APIGatewayProxyResponse response;
+        if(groupOrderMatch.Success && (context.Request.Method=="GET" && !path.EndsWith("/submit") || context.Request.Method=="POST" && path.EndsWith("/submit")))
+            response=await new GroupOrderService(store).Handle(groupOrderMatch.Groups[1].Value,context.Request.Method,claims!,request.Body);
+        else if(context.Request.Method!="GET" && Regex.IsMatch(path,@"^/orders/[^/]+(?:/(?:submit|unsubmit))?$") && reservationMatch.Success &&
+            await store.Get<GroupOrderSubmission>(reservationMatch.Groups[1].Value) is not null)
+            response=new APIGatewayProxyResponse { StatusCode=409,Body="{\"error\":\"The consolidated group order has been sent and is locked.\"}",Headers=new Dictionary<string,string>{{"Content-Type","application/json"}} };
+        else response=await function.FunctionHandler(request,new LambdaContext(app.Logger,context.TraceIdentifier));
         if(operation is not null && response.StatusCode<400)await operation.Commit(context.RequestAborted);
         context.Response.StatusCode=response.StatusCode;
         foreach(var header in response.Headers ?? new Dictionary<string,string>())

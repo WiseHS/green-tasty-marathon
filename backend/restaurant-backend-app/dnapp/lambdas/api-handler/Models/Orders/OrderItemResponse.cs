@@ -10,4 +10,7 @@ public class OrderItemResponse
 
     [JsonPropertyName("quantity")]
     public int Quantity { get; set; }
+
+    [JsonPropertyName("state")]
+    public int State { get; set; }
 }

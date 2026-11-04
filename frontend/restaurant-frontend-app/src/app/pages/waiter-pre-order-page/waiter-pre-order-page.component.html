@@ -5,10 +5,26 @@
 </nav>
 
 <h2 class="title">
-  Pre-order of {{ createdByRole.toLowerCase() }} {{ createdByName }}, Table {{ tableName }} ({{
+  Pre-order of {{ createdByRole.toLowerCase() }} {{ createdByName }}, {{ tableName }} ({{
     reservationTime
   }})
 </h2>
+<div class="order-summary">Order #{{ orderId }} · Total: <strong>{{ total | currency }}</strong></div>
+@if (groupOrder; as group) {
+  <section class="participants" aria-label="Group participants">
+    <h3>Submitted group order · Who ordered what</h3>
+    @for (participant of group.participants; track participant.id) {
+      @if (participant.included) {
+        <article><strong>{{ participant.isOwner ? createdByName + ' (organizer)' : participant.name }}</strong>
+          @for (item of participant.items; track item.dish.id) {
+            <p>{{ item.dish.name }} × {{ item.quantity }} — {{ item.total | currency }}</p>
+          }
+          <p>Subtotal: {{ participant.total | currency }}</p>
+        </article>
+      }
+    }
+  </section>
+}
 <div class="preorder-list">
   @for (item of orderItems; track item.dish.id) {
     <app-dish-card
@@ -19,20 +35,20 @@
       <div dish-footer class="pre-order-footer">
         <div class="pre-order-quantity">Quantity: {{ item.quantity }}</div>
         <div class="preorder-actions">
-          <app-custom-button
-            class="btn-cancel"
+          <button type="button"
+            class="button button--secondary button--large"
             (click)="rejectDish(item.dish.id)"
             [disabled]="item.state === 2"
           >
             Cancel
-          </app-custom-button>
-          <app-custom-button
-            class="btn-confirm"
+          </button>
+          <button type="button"
+            class="button button--primary button--large"
             (click)="confirmDish(item.dish.id)"
             [disabled]="item.state === 1"
           >
             Confirm
-          </app-custom-button>
+          </button>
         </div>
       </div>
     </app-dish-card>

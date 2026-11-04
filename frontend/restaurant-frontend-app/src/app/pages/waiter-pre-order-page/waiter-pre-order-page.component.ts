@@ -12,16 +12,22 @@ import { OrderItem } from '@app/models/dishes/order-item.model';
 import { DishCardComponent } from '@app/shared/custom-components/dish-card/dish-card.component';
 import { firstValueFrom } from 'rxjs';
 import { WaiterPreOrderState } from '@app/models/orders/order.model';
-import { CustomButtonComponent } from '@app/shared/custom-components/custom-button/custom-button.component';
+import { CurrencyPipe } from '@angular/common';
+import { GroupOrderService } from '../group-order-page/group-order.service';
+import { GroupOrderView } from '../group-order-page/group-order.model';
 
 @Component({
   selector: 'app-waiter-pre-order-page',
-  imports: [DishCardComponent, RouterLink, CustomButtonComponent],
+  imports: [DishCardComponent, RouterLink, CurrencyPipe],
   templateUrl: './waiter-pre-order-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './waiter-pre-order-page.component.scss',
 })
 export class WaiterPreOrderPageComponent implements OnInit {
+  groupOrder: GroupOrderView | null = null;
+  orderId = '';
+  get total(): number { return this.orderItems.reduce((total, item) => total + item.dish.price * item.quantity, 0); }
+  private readonly groupOrders = inject(GroupOrderService);
   reservationLabel = '';
   orderItems: OrderItem[] = [];
 
@@ -61,6 +67,9 @@ export class WaiterPreOrderPageComponent implements OnInit {
     this.createdByRole = data.createdByRole;
     this.tableName = data.tableName;
     this.reservationId = data.reservationId;
+    void firstValueFrom(this.groupOrders.get(data.reservationId)).then(group => {
+      this.groupOrder = group; this.tableName = group.tableName; this.cdr.detectChanges();
+    }).catch(() => { /* Personal pre-orders do not have a submitted group snapshot. */ });
 
     firstValueFrom(this.preOrdersService.getByReservationId(data.reservationId))
       .then((order) => {
@@ -68,6 +77,7 @@ export class WaiterPreOrderPageComponent implements OnInit {
         console.log('ORDER FROM SERVER:', JSON.stringify(order, null, 2));
 
         this.orderItems = order.orderItems ?? [];
+        this.orderId = order.orderId;
         this.reservationTime = order.reservationTime || '';
         // this.refreshOrder();
       })

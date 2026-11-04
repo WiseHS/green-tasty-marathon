@@ -55,7 +55,7 @@ public sealed class PostgresRepositories(PostgresStore db) : IDishRepository, IL
     public Task SaveReservationAsync(Reservation value) => db.Save(value);
     public Task<Order?> GetOrderByIdAsync(string orderId, string customerId) => db.Get<Order>($"{orderId}|{customerId}");
     public async Task<IEnumerable<Order>> GetOrdersByCustomerIdAsync(string id) => await db.Find<Order>(nameof(Order.CustomerId), id);
-    public async Task<Order?> GetOrderByReservationIdAsync(string id) => (await db.Find<Order>(nameof(Order.ReservationId), id)).FirstOrDefault();
+    public async Task<Order?> GetOrderByReservationIdAsync(string id) => (await db.Find<Order>(nameof(Order.ReservationId), id)).OrderBy(value => value.Status == OrderStatus.Cancelled).FirstOrDefault();
     public Task SaveOrderAsync(Order value) => db.Save(value);
     public async Task<int> CountByGroupReservationId(string id) => (await GetAllByGroupReservationIdAsync(id)).Count;
     public async Task<GuestSession?> GetByGroupReservationId(string id) => (await GetAllByGroupReservationIdAsync(id)).FirstOrDefault();

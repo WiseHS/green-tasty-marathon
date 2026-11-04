@@ -89,6 +89,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'reservations/:reservationId/group-order',
+        canActivate: [AuthGuard],
+        data: { authorized: true },
+        loadComponent: () => import('./pages/group-order-page/group-order-page.component').then(module => module.GroupOrderPageComponent),
+      },
+      {
         path: 'guest-pre-order-expired',
         loadComponent: () =>
           import('./pages/guest-pre-order-expired-page/guest-pre-order-expired-page.component').then(

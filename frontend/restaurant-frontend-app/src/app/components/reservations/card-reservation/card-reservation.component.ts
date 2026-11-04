@@ -173,6 +173,9 @@ export class CardReservationComponent {
       queryParams,
     });
   }
+  openGroupOrder(): void {
+    void this.router.navigate(['/reservations', this.r().id, 'group-order']);
+  }
   onPreOrderWaiter(): void {
     if (this.preOrderItemCount() > 0) {
       this.navigateToWaiterPreOrder();
@@ -224,7 +227,7 @@ export class CardReservationComponent {
       reservationId: reservation.id,
       createdByName: this.creatorName(),
       createdByRole: this.creatorRole(),
-      tableName: reservation.tableName || 'Unknown table',
+      tableName: reservation.tableName || this.displayedTableLabel(),
     };
 
     sessionStorage.setItem(

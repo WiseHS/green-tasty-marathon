@@ -1,0 +1,64 @@
+<main class="group-order">
+  <a routerLink="/reservations">Back to reservations</a>
+  <h1>Group pre-order</h1>
+  @if (loading()) { <p role="status">Loading participant orders...</p> }
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }} <button type="button" (click)="retry()">Try again</button></div>
+  }
+  @if (view(); as group) {
+    <p>{{ group.locationAddress }} · {{ group.tableName }} · {{ group.startTime | date:'medium' }}</p>
+    @if (group.status === 'submitted') {
+      <div class="notice" role="status">Group order sent to the restaurant. The submitted selection is locked.</div>
+      <p>Order #{{ group.orderId }}</p>
+    } @else {
+      <p class="notice">Guests ready: {{ group.readyGuests }} / {{ group.joinedGuests }} joined · Invited: {{ group.invitedGuests }}.
+        Only submitted guest selections will be sent. Updates every 15 seconds.</p>
+    }
+    <div class="layout">
+      <section aria-label="Participant orders">
+        <h2>Who ordered what</h2>
+        @for (participant of group.participants; track participant.id) {
+          <article class="participant">
+            <div class="participant-heading">
+              <h3>{{ participant.name }} {{ participant.isOwner ? '(organizer)' : '' }}</h3>
+              <span class="status">{{ participant.isOwner ? 'Your selection' : participant.isSubmitted ? 'Submitted' : 'Draft · excluded' }}</span>
+            </div>
+            @if (participant.items.length === 0) { <p>No dishes selected yet.</p> }
+            @for (item of participant.items; track item.dish.id) {
+              <div class="item"><span>{{ item.dish.name }} × {{ item.quantity }}</span><strong>{{ item.total | currency }}</strong></div>
+            }
+            <p class="subtotal">Participant total: {{ participant.total | currency }}</p>
+            @if (group.status === 'open' && participant.isOwner) {
+              <a [routerLink]="'/menu'" [queryParams]="{preOrder: true, reservationId: group.reservationId}">Choose your dishes</a>
+            }
+            @if (group.status === 'open' && !participant.isOwner) {
+              <button type="button" class="remove" [disabled]="busy()" (click)="removing.set(participant.id)">Remove guest</button>
+            }
+            @if (removing() === participant.id) {
+              <div class="notice">Remove this guest and their dishes from the group?
+                <button type="button" [disabled]="busy()" (click)="remove()">Yes, remove</button>
+                <button type="button" [disabled]="busy()" (click)="removing.set(null)">Keep guest</button>
+              </div>
+            }
+          </article>
+        }
+        @if (group.joinedGuests === 0) { <p>No guests have joined yet. Share your reservation invitation with them.</p> }
+      </section>
+      <aside aria-label="Consolidated order">
+        <h2>{{ group.status === 'submitted' ? 'Sent to restaurant' : 'Ready to send' }}</h2>
+        @for (item of group.consolidatedItems; track item.dish.id) {
+          <div class="item"><span>{{ item.dish.name }} × {{ item.quantity }}</span><strong>{{ item.total | currency }}</strong></div>
+        } @empty { <p>No dishes are ready to send.</p> }
+        <p class="grand-total">Total <strong>{{ group.total | currency }}</strong></p>
+        @if (group.status === 'open') {
+          @if (group.readyGuests < group.invitedGuests) {
+            <p class="notice">Some guests have not submitted. Their draft selections are excluded.</p>
+          }
+          @if (group.blockReason) { <p role="status">{{ group.blockReason }}</p> }
+          <label class="review"><input type="checkbox" [checked]="reviewed()" [disabled]="busy()" (change)="setReviewed($event)">I have reviewed the dishes, quantities and excluded guests.</label>
+          <button type="button" class="button button--primary button--large send" [disabled]="!group.canSubmit || !reviewed() || busy() || !!error()" (click)="submit()">{{ busy() ? 'Sending...' : 'Send group order' }}</button>
+        }
+      </aside>
+    </div>
+  }
+</main>
